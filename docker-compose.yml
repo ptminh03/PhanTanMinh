@@ -1,0 +1,22 @@
+version: "3.9"
+volumes:
+  postgres:
+services:
+  db:
+    image: postgres:14.3
+    container_name: psql_db
+    volumes:
+      - postgres:/data/postgres
+    environment:
+      - POSTGRES_DB=postgres
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - PGDATA=/data/postgres
+    ports:
+      - "3308:5432"
+    command: ["postgres", "-c", "log_statement=all"]
+    networks:
+      - backend
+networks:
+  backend:
+    name: 'local'
