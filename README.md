@@ -45,3 +45,28 @@ npm install express typescript @types/node @types/express
 - docker-compose up -d
 - npm run start
 ---
+
+# Problem 6: Architecture
+## Overview
+The <b>API Service</b> module provides functionality for updating user scores on the backend application server. It handles API requests from the client application to update user scores securely and efficiently.
+
+## Flow of Execution
+- <b>Client Application</b> Initiates an action that triggers a score update.
+- <b>Dispatch API Call</b> Upon action completion, the client application dispatches an API call to the backend application server.
+- <b>Authorization Check</b> The backend application server checks the authorization of the user making the API call to prevent unauthorized score updates.
+- <b>Score Update</b> If the user is authorized, the backend application server updates the user's score accordingly.
+- <b>Live Scoreboard Update</b> After updating the score, the backend application server triggers a live update of the scoreboard on the website to reflect the latest changes.
+
+## Refer to the flow diagram below
+<img src="./documents/flow_diagram.jpg" alt="Flow Diagram">
+
+## Swagger API
+See swagger details [here](./documents/swagger.yml)
+
+## Improvement
+As applications are scaled, additional features are needed to ensure data integrity or prevent breaches, such as:
+- Users managements. Manage users (CRUD) using the interface.
+- Tasks managements. Manage tasks (CRUD) using the interface.
+- Forgot password, change password.
+- Encrypt "completed task" requests to prevent malicious users.
+- Scalability: Design the API service module to handle a large number of concurrent requests efficiently to support scalability.

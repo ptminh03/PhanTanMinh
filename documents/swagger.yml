@@ -1,0 +1,157 @@
+openapi: 3.0.0
+
+info:
+  version: 1.0.0
+  title: Score board
+  x-api-name: Custom Score Board API
+  description: |
+    - We have a website with a score board, which shows the top 10 user's scores.
+    - It live update of the score board.
+    - User can do an action, completing this action will increase the user's score.
+    - Upon completion the action will dispatch an API call to the application server to update the score.
+
+servers:
+  - url: http://localhost:3000
+
+paths:
+  /auths/login:
+    post:
+      summary: Login by username and password
+      tags:
+        - Auths
+      description: |
+        1. Find the user
+          - users.username = request.username
+          - users.password_encrypt = bcrypt(request.password)
+          - users.deleted_at IS NULL
+        2. Generate JWT then response success
+          - HEADER {
+            "alg": "HS256",
+            "typ": "JWT"
+          }
+          - PAYLOAD
+          {
+            "id": {users.id},
+            "username": {users.username},
+          }
+          - SECRET: the env "JWT_SECRET"
+          - EXPIRATION: 4 hours
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - username
+                - password
+              properties:
+                username:
+                  type: string
+                  minLength: 6
+                  maxLength: 16
+                  pattern: "^[a-zA-Z0-9]{1,}$"
+                password:
+                  type: string
+                  minLength: 16
+                  maxLength: 32
+                  pattern: "^[a-zA-Z0-9]{1,}$"
+      responses:
+        '200':
+          description: Get token
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ.SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c
+        '404':
+          description: Error when the user not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: not found
+        '500':
+          description: Error when an error occurs while generating JWT
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: internal server error
+  /tasks/{task_id}/completed:
+    post:
+      summary: The user completes the task
+      tags:
+        - Tasks
+      description: |
+        1. Find the task
+          - tasks.id = request.task_id
+          - tasks.deleted_at IS NULL
+        2. Check the user has completed that task
+          - user_tasks.user_id = users.id
+          - user_tasks.task_id = tasks.id
+          - user_tasks.deleted_at IS NULL
+        3. Insert user_tasks:
+          - user_id- user_tasks.user_id = users.id
+          - user_tasks.task_id = tasks.id
+          - user_tasks.point = tasks.point
+        4. Recalculate the top 10 scores, if there's any change, emit the event socket io:
+          - eventName: "completeTask"
+          - data: topScores
+      parameters:
+        - name: task_id
+          in: path
+          required: true
+          schema:
+            type: integer
+            format: int32
+            minimum: 1
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  user_task_id:
+                    type: string
+                    example: 1
+        '404':
+          description: Error when the task not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: not found
+        '500':
+          description: Error when an unexpected error occurs
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: internal server error
+  
+components:
+  securitySchemes:
+    auth:
+      type: apiKey
+      in: header
+      name: Authorization
+security:
+  - auth: []
